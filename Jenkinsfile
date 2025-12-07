@@ -27,6 +27,9 @@ pipeline {
         }
         
         stage('Build Docker Image') {
+            when {
+                expression { return fileExists('C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe') }
+            }
             steps {
                 dir('backend') {
                     bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
@@ -36,6 +39,9 @@ pipeline {
         }
         
         stage('Push to Registry') {
+            when {
+                expression { return fileExists('C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe') }
+            }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     bat "docker login -u %USER% -p %PASS%"
