@@ -3,61 +3,32 @@ version: '3.8'
 services:
   mysql:
     image: mysql:8.0
-    container_name: revtickets-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: revtickets
+      MYSQL_DATABASE: revticketsnew
     ports:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-    networks:
-      - revtickets-network
 
   mongodb:
-    image: mongo:7.0
-    container_name: revtickets-mongodb
+    image: mongo:6.0
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
-    networks:
-      - revtickets-network
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: revtickets-backend
+    image: revtickets-backend:latest
     ports:
       - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/revtickets
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
-      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/revtickets
     depends_on:
       - mysql
       - mongodb
-    networks:
-      - revtickets-network
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: revtickets-frontend
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    networks:
-      - revtickets-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/revticketsnew
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/revtickets
 
 volumes:
   mysql-data:
   mongo-data:
-
-networks:
-  revtickets-network:
-    driver: bridge
