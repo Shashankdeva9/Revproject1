@@ -7,7 +7,8 @@ pipeline {
     }
     
     environment {
-        DOCKER_IMAGE = 'shashank092/revtickets-backend'
+        DOCKER_IMAGE_BACKEND = 'shashank092/revtickets-backend'
+        DOCKER_IMAGE_FRONTEND = 'shashank092/revtickets-frontend'
         DOCKER_TAG = "${BUILD_NUMBER}"
     }
     
@@ -18,7 +19,7 @@ pipeline {
             }
         }
         
-        stage('Build JAR') {
+        stage('Build Backend JAR') {
             steps {
                 dir('backend') {
                     bat 'mvn clean package -DskipTests'
@@ -26,14 +27,35 @@ pipeline {
             }
         }
         
-        stage('Build Docker Image') {
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') {
+                    bat 'npm install'
+                    bat 'npm run build'
+                }
+            }
+        }
+        
+        stage('Build Backend Docker Image') {
             when {
                 expression { return fileExists('C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe') }
             }
             steps {
                 dir('backend') {
-                    bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                    bat "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
+                    bat "docker build -t ${DOCKER_IMAGE_BACKEND}:${DOCKER_TAG} ."
+                    bat "docker tag ${DOCKER_IMAGE_BACKEND}:${DOCKER_TAG} ${DOCKER_IMAGE_BACKEND}:latest"
+                }
+            }
+        }
+        
+        stage('Build Frontend Docker Image') {
+            when {
+                expression { return fileExists('C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe') }
+            }
+            steps {
+                dir('frontend') {
+                    bat "docker build -t ${DOCKER_IMAGE_FRONTEND}:${DOCKER_TAG} ."
+                    bat "docker tag ${DOCKER_IMAGE_FRONTEND}:${DOCKER_TAG} ${DOCKER_IMAGE_FRONTEND}:latest"
                 }
             }
         }
@@ -45,8 +67,10 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     bat "docker login -u %USER% -p %PASS%"
-                    bat "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                    bat "docker push ${DOCKER_IMAGE}:latest"
+                    bat "docker push ${DOCKER_IMAGE_BACKEND}:${DOCKER_TAG}"
+                    bat "docker push ${DOCKER_IMAGE_BACKEND}:latest"
+                    bat "docker push ${DOCKER_IMAGE_FRONTEND}:${DOCKER_TAG}"
+                    bat "docker push ${DOCKER_IMAGE_FRONTEND}:latest"
                 }
             }
         }
